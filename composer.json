@@ -1,0 +1,38 @@
+{
+  "name": "skaylink/clients",
+  "description": "Provides shared laravel-based client libraries",
+  "keywords": ["framework", "laravel", "library", "clients", "skaylink"],
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jochen Werner",
+      "email": "jochen.werner@skaylink.com",
+      "homepage": "https://www.skaylink.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "8.*",
+    "illuminate/routing": "^10.38",
+    "illuminate/support": "^10.38",
+    "illuminate/http": "^10.38",
+    "illuminate/cache": "^10.38"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "Skaylink\\Clients\\": "./src"
+    },
+    "files": [
+      "helpers/collection.php",
+      "helpers/debug.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Skaylink\\Clients\\Tests\\": "./tests"
+    }
+  }
+}
