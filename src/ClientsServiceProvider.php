@@ -1,6 +1,4 @@
-<?php
-
-namespace Skaylink\Clients;
+<?php namespace Skaylink\Clients;
 
 use Illuminate\Support\ServiceProvider;
 
