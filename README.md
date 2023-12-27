@@ -2,7 +2,9 @@
 
 Provides shared laravel-based client libraries
 
-Extend repositories section and require `skaylink/cmapi-client` in your `composer.json`.
+Extend repositories section and require `skaylink/clients` in your `composer.json`.
+
+### Setup
 
 ```
   "repositories": [
