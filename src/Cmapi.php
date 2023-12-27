@@ -1,6 +1,6 @@
 <?php namespace Skaylink\Clients;
 
-use Skaylink\Cmapi\Store;
+use Skaylink\Clients\Store;
 use Illuminate\Http\Request;
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Routing\RouteCollection;
