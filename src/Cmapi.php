@@ -97,10 +97,10 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $method
-   * @param  string                           $url
-   * @param  array                            $params
-   * @return \Illuminate\Support\Collection
+   * @param  string                               $method
+   * @param  string                               $url
+   * @param  array                                $params
+   * @return \Illuminate\Support\Collection|null
    * @access private
    */
   private function call(string $method, string $url, array $params= []): ?Collection
@@ -119,9 +119,9 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $url
-   * @param  array                            $params
-   * @return \Illuminate\Support\Collection
+   * @param  string                               $url
+   * @param  array                                $params
+   * @return \Illuminate\Support\Collection|null
    * @access private
    */
   private function get(string $url, array $params= []): ?Collection
@@ -130,9 +130,9 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $url
-   * @param  array                            $params
-   * @return \Illuminate\Support\Collection
+   * @param  string                               $url
+   * @param  array                                $params
+   * @return \Illuminate\Support\Collection|null
    * @access private
    */
   private function post(string $url, array $params= []): ?Collection
@@ -141,9 +141,9 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $url
-   * @param  array                            $params
-   * @return \Illuminate\Support\Collection
+   * @param  string                               $url
+   * @param  array                                $params
+   * @return \Illuminate\Support\Collection|null
    * @access private
    */
   private function put(string $url, array $params= []): ?Collection
@@ -152,9 +152,9 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $url
-   * @param  array                            $params
-   * @return \Illuminate\Support\Collection
+   * @param  string                               $url
+   * @param  array                                $params
+   * @return \Illuminate\Support\Collection|null
    * @access private
    */
   private function patch(string $url, array $params= []): ?Collection
@@ -163,9 +163,9 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $url
-   * @param  array                            $params
-   * @return \Illuminate\Support\Collection
+   * @param  string                               $url
+   * @param  array                                $params
+   * @return \Illuminate\Support\Collection|null
    * @access private
    */
   private function delete(string $url, array $params= []): ?Collection
@@ -174,8 +174,8 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $username
-   * @param  string                           $password
+   * @param  string $username
+   * @param  string $password
    * @return bool
    * @access public
    * @static
@@ -195,9 +195,9 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $username
-   * @param  string                           $password
-   * @return \Illuminate\Support\Collection
+   * @param  string                               $username
+   * @param  string                               $password
+   * @return \Illuminate\Support\Collection|null
    * @access public
    * @static
    */
@@ -211,7 +211,7 @@ class Cmapi
         'password'    => $password
       ])
     ]);
-    return $client->get($client->endpoint('user'))->get('data');
+    return optional($client->get($client->endpoint('user')))->get('data');
   }
 
   /**
