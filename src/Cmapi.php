@@ -54,8 +54,8 @@ class Cmapi
     if (!$store->has($cache)) {
       $oauth = $this->authenticate();
       $this->bearer = $oauth->get('access_token');
-      abort_if(!$oauth->get('access_token'), 
-        Response::HTTP_UNAUTHORIZED, 
+      abort_if(!$oauth->get('access_token'),
+        Response::HTTP_UNAUTHORIZED,
         $oauth->get('message'));
       $store->set($cache, $this->bearer, $oauth->get('expires_in'));
     } else {
@@ -262,7 +262,7 @@ class Cmapi
       $client   = new self;
       $response = $client->validateToken();
       if (Response::HTTP_OK != $response->get('code')) return false;
-      $url = sprintf('%ss/%s', config('cmapi.client.token'), 
+      $url = sprintf('%ss/%s', config('cmapi.client.token'),
         $response->get('token'));
       return (Response::HTTP_NO_CONTENT == $client->delete($url)->get('code'));
     } catch (Exception $e) {

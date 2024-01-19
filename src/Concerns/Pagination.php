@@ -61,10 +61,10 @@ trait Pagination
         if ($meta = optional($body->get('@meta'))->get('pagination')) {
           $page = (int) $meta->get('currentPage');
           while ($page < (int) $meta->get('totalPages')) {
-            return $this->iterate($url, 
+            return $this->iterate($url,
               array_merge($params, ['page' => ($page + 1)]), $callback);
           }
-        }  
+        }
       case $response->failed():
         jotError($response->json());
         return;

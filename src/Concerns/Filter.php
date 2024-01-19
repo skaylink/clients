@@ -4,7 +4,7 @@ trait Filter
 {
   /**
    * Create base64 encoded JSON
-   * 
+   *
    * @param  array  $params
    * @return string
    * @access public
