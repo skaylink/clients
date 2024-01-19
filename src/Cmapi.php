@@ -1,7 +1,7 @@
 <?php namespace Skaylink\Clients;
 
 use Skaylink\Clients\Store;
-use Skaylink\Concerns\Pagination;
+use Skaylink\Clients\Concerns\Pagination;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\UrlGenerator;
@@ -122,7 +122,7 @@ class Cmapi
     $response = Http::accept('application/json')
       ->withToken($this->bearer)
       ->withHeaders($this->headers($url, $params))
-      ->{$method}($url, $params);
+      ->{$method}($this->endpoint($url), $params);
     switch(true) {
       case $response->successful():
         return recursive($response->json());
@@ -136,9 +136,9 @@ class Cmapi
    * @param  string                               $url
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
-   * @access private
+   * @access public
    */
-  private function get(string $url, array $params= []): ?Collection
+  public function get(string $url, array $params= []): ?Collection
   {
     return $this->call('get', $url, $params);
   }
@@ -147,9 +147,9 @@ class Cmapi
    * @param  string                               $url
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
-   * @access private
+   * @access public
    */
-  private function post(string $url, array $params= []): ?Collection
+  public function post(string $url, array $params= []): ?Collection
   {
     return $this->call('post', $url, $params);
   }
@@ -158,9 +158,9 @@ class Cmapi
    * @param  string                               $url
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
-   * @access private
+   * @access public
    */
-  private function put(string $url, array $params= []): ?Collection
+  public function put(string $url, array $params= []): ?Collection
   {
     return $this->call('put', $url, $params);
   }
@@ -169,9 +169,9 @@ class Cmapi
    * @param  string                               $url
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
-   * @access private
+   * @access public
    */
-  private function patch(string $url, array $params= []): ?Collection
+  public function patch(string $url, array $params= []): ?Collection
   {
     return $this->call('patch', $url, $params);
   }
@@ -180,16 +180,17 @@ class Cmapi
    * @param  string                               $url
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
-   * @access private
+   * @access public
    */
-  private function delete(string $url, array $params= []): ?Collection
+  public function delete(string $url, array $params= []): ?Collection
   {
     return $this->call('delete', $url, $params);
   }
 
   /**
-   * @param  string $username
-   * @param  string $password
+   * @param  string   $id
+   * @param  string   $secret
+   * @param  string   $salt
    * @return bool
    * @access public
    * @static
@@ -225,7 +226,7 @@ class Cmapi
         'password'    => $password
       ])
     ]);
-    return optional($client->get($client->endpoint('user')))->get('data');
+    return optional($client->get('user'))->get('data');
   }
 
   /**
@@ -262,7 +263,7 @@ class Cmapi
       $client   = new self;
       $response = $client->validateToken();
       if (Response::HTTP_OK != $response->get('code')) return false;
-      $url = sprintf('%ss/%s', config('cmapi.client.token'),
+      $url = sprintf('%ss/%s', config('api.cmapi.token'),
         $response->get('token'));
       return (Response::HTTP_NO_CONTENT == $client->delete($url)->get('code'));
     } catch (Exception $e) {
@@ -272,14 +273,14 @@ class Cmapi
   }
 
   /**
-   * @param  string                           $account
-   * @param  string                           $region
-   * @return \Illuminate\Support\Collection
+   * @param  string                               $account
+   * @param  string                               $region
+   * @return \Illuminate\Support\Collection|null
    * @access public
    */
   public function credentials(string $account, string $region): ?Collection
   {
     $uri = sprintf('accounts/%s/credentials', $account);
-    return $this->post($this->endpoint($uri), ['region' => $region]);
+    return $this->post($uri, ['region' => $region]);
   }
 }

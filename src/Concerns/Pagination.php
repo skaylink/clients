@@ -1,6 +1,6 @@
-<?php namespace Skaylink\Concerns;
+<?php namespace Skaylink\Clients\Concerns;
 
-use Skaylink\Concerns\Filter;
+use Skaylink\Clients\Concerns\Filter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;

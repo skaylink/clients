@@ -1,4 +1,4 @@
-<?php namespace Skaylink\Concerns;
+<?php namespace Skaylink\Clients\Concerns;
 
 trait Filter
 {
