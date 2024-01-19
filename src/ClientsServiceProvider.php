@@ -1,5 +1,6 @@
 <?php namespace Skaylink\Clients;
 
+use Skaylink\Clients\Cmapi;
 use Illuminate\Support\ServiceProvider;
 
 class ClientsServiceProvider extends ServiceProvider
@@ -37,6 +38,10 @@ class ClientsServiceProvider extends ServiceProvider
       ], 'api-config');
       }
     }
+    // bind cmapi client to application
+    $this->app->bind(Cmapi::class, function() {
+      return new Cmapi;
+    });
   }
 
   /**

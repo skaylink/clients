@@ -1,15 +1,21 @@
 <?php namespace Skaylink\Clients;
 
 use Skaylink\Clients\Store;
+use Skaylink\Concerns\Pagination;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Collection;
+use Exception;
 
 class Cmapi
 {
+  use Pagination;
+
+  /* the cache-key prefix */
   const STORE = 'cmapi.credentials:';
 
   /**
@@ -23,6 +29,12 @@ class Cmapi
    * @access protected
    */
   protected $expires;
+
+  /**
+   * @var array $filter
+   * @access protected
+   */
+  protected $filter = [];
 
   /**
    * @var \Illuminate\Support\Collection $config
@@ -42,7 +54,9 @@ class Cmapi
     if (!$store->has($cache)) {
       $oauth = $this->authenticate();
       $this->bearer = $oauth->get('access_token');
-      abort_if(!$oauth->get('access_token'), 401, $oauth->get('message'));
+      abort_if(!$oauth->get('access_token'), 
+        Response::HTTP_UNAUTHORIZED, 
+        $oauth->get('message'));
       $store->set($cache, $this->bearer, $oauth->get('expires_in'));
     } else {
       $this->bearer = $store->get($cache);
@@ -212,6 +226,49 @@ class Cmapi
       ])
     ]);
     return optional($client->get($client->endpoint('user')))->get('data');
+  }
+
+  /**
+   * Validate token
+   *
+   * @return \Illuminate\Support\Collection
+   * @access public
+   */
+  public function validateToken(): Collection
+  {
+    try {
+      $response = $this->get('user/validate-token');
+    } catch(Exception $e) {
+      $response = collect([
+        'valid'   => false,
+        'token'   => null,
+        'status'  => $e->getMessage(),
+        'code'    => Response::HTTP_BAD_REQUEST
+      ]);
+    }
+    return $response;
+  }
+
+  /**
+   * Revoke current user client token
+   *
+   * @return boolean
+   * @access public
+   * @static
+   */
+  public static function revoke(): bool
+  {
+    try {
+      $client   = new self;
+      $response = $client->validateToken();
+      if (Response::HTTP_OK != $response->get('code')) return false;
+      $url = sprintf('%ss/%s', config('cmapi.client.token'), 
+        $response->get('token'));
+      return (Response::HTTP_NO_CONTENT == $client->delete($url)->get('code'));
+    } catch (Exception $e) {
+      jot(['revoke' => $e->getMessage()]);
+      return false;
+    }
   }
 
   /**
