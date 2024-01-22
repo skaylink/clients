@@ -2,6 +2,7 @@
 
 use Skaylink\Clients\Store;
 use Skaylink\Clients\Concerns\Pagination;
+use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\UrlGenerator;
@@ -87,17 +88,34 @@ class Cmapi
   }
 
   /**
+   * @param  string   $method
    * @param  string   $url
    * @param  array    $params
-   * @return array
+   * @return array    $headers
    * @access private
    */
-  private function headers(string $url, array $params): array
+  private function headers(string $method, string $url, array $params): array
   {
-    $body   = (!count($params)) ? '' : json_encode($params);
-    $router = new UrlGenerator(new RouteCollection, new Request);
-    $plain  = $router->to($url) . $body . $this->config->get('salt');
-    return [$this->config->get('checksum') => Hash::make($plain)];
+    switch(strtolower($method)) {
+      case 'get':
+      case 'delete':
+        $option = RequestOptions::QUERY;
+        break;
+      // post, patch, put
+      default:
+        $option = RequestOptions::JSON;
+    }
+    if (RequestOptions::QUERY == $option && count($params)) {
+      $sep  = (strstr($url, '?') == false) ? '?' : '&';
+      $url .= ($sep . http_build_query($params));
+      $params = [];
+    }
+    $body    = (!count($params)) ? '' : json_encode($params);
+    $router  = new UrlGenerator(new RouteCollection, new Request);
+    $plain   = $router->to($url) . $body . $this->config->get('salt');
+    $headers = [$this->config->get('checksum') => Hash::make($plain)];
+    // jot(array_merge($headers, ['plain' => $plain]));
+    return $headers;
   }
 
   /**
@@ -112,79 +130,80 @@ class Cmapi
 
   /**
    * @param  string                               $method
-   * @param  string                               $url
+   * @param  string                               $uri
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
    * @access private
    */
-  private function call(string $method, string $url, array $params= []): ?Collection
+  private function call(string $method, string $uri, array $params= []): ?Collection
   {
+    $endpoint = $this->endpoint($uri);
     $response = Http::accept('application/json')
       ->withToken($this->bearer)
-      ->withHeaders($this->headers($url, $params))
-      ->{$method}($this->endpoint($url), $params);
+      ->withHeaders($this->headers($method, $endpoint, $params))
+        ->{$method}($endpoint, $params);
     switch(true) {
       case $response->successful():
         return recursive($response->json());
       case $response->failed():
-        jotError($response->json());
+        jotError(['cmapi@call' => $response->json()]);
         return null;
     }
   }
 
   /**
-   * @param  string                               $url
+   * @param  string                               $uri
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
    * @access public
    */
-  public function get(string $url, array $params= []): ?Collection
+  public function get(string $uri, array $params= []): ?Collection
   {
-    return $this->call('get', $url, $params);
+    return $this->call('get', $uri, $params);
   }
 
   /**
-   * @param  string                               $url
+   * @param  string                               $uri
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
    * @access public
    */
-  public function post(string $url, array $params= []): ?Collection
+  public function post(string $uri, array $params= []): ?Collection
   {
-    return $this->call('post', $url, $params);
+    return $this->call('post', $uri, $params);
   }
 
   /**
-   * @param  string                               $url
+   * @param  string                               $uri
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
    * @access public
    */
-  public function put(string $url, array $params= []): ?Collection
+  public function put(string $uri, array $params= []): ?Collection
   {
-    return $this->call('put', $url, $params);
+    return $this->call('put', $uri, $params);
   }
 
   /**
-   * @param  string                               $url
+   * @param  string                               $uri
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
    * @access public
    */
-  public function patch(string $url, array $params= []): ?Collection
+  public function patch(string $uri, array $params= []): ?Collection
   {
-    return $this->call('patch', $url, $params);
+    return $this->call('patch', $uri, $params);
   }
 
   /**
-   * @param  string                               $url
+   * @param  string                               $uri
    * @param  array                                $params
    * @return \Illuminate\Support\Collection|null
    * @access public
    */
-  public function delete(string $url, array $params= []): ?Collection
+  public function delete(string $uri, array $params= []): ?Collection
   {
-    return $this->call('delete', $url, $params);
+    return $this->call('delete', $uri, $params);
   }
 
   /**
@@ -250,6 +269,16 @@ class Cmapi
     return $response;
   }
 
+
+  /**
+   * @return void
+   * @access public
+   */
+  public function clearTokens(): void
+  {
+    (new Store)->forget(self::STORE . md5($this->config()->toJson()));
+  }
+
   /**
    * Revoke current user client token
    *
@@ -263,9 +292,9 @@ class Cmapi
       $client   = new self;
       $response = $client->validateToken();
       if (Response::HTTP_OK != $response->get('code')) return false;
-      $url = sprintf('%ss/%s', config('api.cmapi.token'),
+      $uri = sprintf('%ss/%s', config('api.cmapi.token'),
         $response->get('token'));
-      return (Response::HTTP_NO_CONTENT == $client->delete($url)->get('code'));
+      return (Response::HTTP_NO_CONTENT == $client->delete($uri)->get('code'));
     } catch (Exception $e) {
       jot(['revoke' => $e->getMessage()]);
       return false;

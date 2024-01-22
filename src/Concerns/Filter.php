@@ -1,5 +1,7 @@
 <?php namespace Skaylink\Clients\Concerns;
 
+use Illuminate\Http\Request;
+
 trait Filter
 {
   /**
@@ -41,8 +43,6 @@ trait Filter
   protected function getFilterParams(Request $request, array $filters = []): array
   {
     return [
-      'limit' => $request->get('limit', 50),
-      'page'  => $request->get('page', 1),
       // the ordering of array keys should be alphabetic because of checksum creation
       'filter' => self::createFilterHash(array_merge($filters, [
         'direction' => $request->get('direction', 'asc'),
