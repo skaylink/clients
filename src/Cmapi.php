@@ -51,7 +51,7 @@ class Cmapi
   {
     $store  = new Store;
     $this->config = $this->config($extra);
-    $cache  = self::STORE . md5($this->config->toJson());
+    $cache  = self::STORE; // . md5($this->config->toJson());
     if (!$store->has($cache)) {
       $oauth = $this->authenticate();
       $this->bearer = $oauth->get('access_token');
@@ -74,6 +74,7 @@ class Cmapi
       $this->config->get('token'),
       $this->config->get('credentials')->toArray()
     );
+    abort_if($response->failed(), $response->getStatusCode());
     return recursive($response->json());
   }
 
@@ -138,16 +139,25 @@ class Cmapi
   private function call(string $method, string $uri, array $params= []): ?Collection
   {
     $endpoint = $this->endpoint($uri);
+    $headers  = $this->headers($method, $endpoint, $params);
     $response = Http::accept('application/json')
       ->withToken($this->bearer)
-      ->withHeaders($this->headers($method, $endpoint, $params))
-        ->{$method}($endpoint, $params);
+      ->withHeaders($headers)->{$method}($endpoint, $params);
     switch(true) {
       case $response->successful():
-        return recursive($response->json());
+        $data = recursive($response->json());
+        if (!$data->has('code')) $data->put('code', $response->getStatusCode());
+        return $data;
       case $response->failed():
-        jotError(['cmapi@call' => $response->json()]);
-        return null;
+        jotError([
+          'cmapi@call' => $response->getStatusCode(),
+          'action'     => $endpoint,
+          'params'     => $params,
+          'bearer'     => $this->bearer,
+          'headers'    => $headers,
+          'body'       => $response->json()
+        ]);
+        abort($response->getStatusCode());
     }
   }
 
@@ -157,7 +167,7 @@ class Cmapi
    * @return \Illuminate\Support\Collection|null
    * @access public
    */
-  public function get(string $uri, array $params= []): ?Collection
+  public function get(string $uri, array $params = []): ?Collection
   {
     return $this->call('get', $uri, $params);
   }
@@ -179,7 +189,7 @@ class Cmapi
    * @return \Illuminate\Support\Collection|null
    * @access public
    */
-  public function put(string $uri, array $params= []): ?Collection
+  public function put(string $uri, array $params = []): ?Collection
   {
     return $this->call('put', $uri, $params);
   }
@@ -190,7 +200,7 @@ class Cmapi
    * @return \Illuminate\Support\Collection|null
    * @access public
    */
-  public function patch(string $uri, array $params= []): ?Collection
+  public function patch(string $uri, array $params = []): ?Collection
   {
     return $this->call('patch', $uri, $params);
   }
@@ -258,6 +268,7 @@ class Cmapi
   {
     try {
       $response = $this->get('user/validate-token');
+
     } catch(Exception $e) {
       $response = collect([
         'valid'   => false,
@@ -284,17 +295,16 @@ class Cmapi
    *
    * @return boolean
    * @access public
-   * @static
    */
-  public static function revoke(): bool
+  public function revoke(): bool
   {
     try {
-      $client   = new self;
-      $response = $client->validateToken();
+      $response = $this->validateToken();
       if (Response::HTTP_OK != $response->get('code')) return false;
+      $this->clearTokens();
       $uri = sprintf('%ss/%s', config('api.cmapi.token'),
         $response->get('token'));
-      return (Response::HTTP_NO_CONTENT == $client->delete($uri)->get('code'));
+      return (Response::HTTP_NO_CONTENT == $this->delete($uri)->get('code'));
     } catch (Exception $e) {
       jot(['revoke' => $e->getMessage()]);
       return false;
