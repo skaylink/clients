@@ -44,14 +44,16 @@ class Cmapi
   protected $config;
 
   /**
-   * @param  array  $extra
+   * @param  array   $extra
+   * @param  string  $cacheKey
    * @constructor
    */
-  public function __construct(array $extra = [])
+  public function __construct(array $extra = [], string $cacheKey = '')
   {
     $store  = new Store;
     $this->config = $this->config($extra);
-    $cache  = self::STORE; // . md5($this->config->toJson());
+    $cache = $this->getCacheKey($cacheKey);
+    jotWarning($cache);
     if (!$store->has($cache)) {
       $oauth = $this->authenticate();
       $this->bearer = $oauth->get('access_token');
@@ -62,6 +64,16 @@ class Cmapi
     } else {
       $this->bearer = $store->get($cache);
     }
+  }
+
+  /**
+   * @param  string   $suffix
+   * @return string
+   * @access protected
+   */
+  protected function getCacheKey(string $suffix = ''): string
+  {
+    return self::STORE . $suffix;
   }
 
   /**
@@ -241,11 +253,12 @@ class Cmapi
   /**
    * @param  string                               $username
    * @param  string                               $password
+   * @param  string                               $id
    * @return \Illuminate\Support\Collection|null
    * @access public
    * @static
    */
-  public static function signInAs(string $username, string $password): ?Collection
+  public static function signInAs(string $username, string $password, string $id): ?Collection
   {
     $client = new self([
       'salt'        => config('api.cmapi.salt'),
@@ -254,7 +267,7 @@ class Cmapi
         'username'    => $username,
         'password'    => $password
       ])
-    ]);
+    ], $id);
     return optional($client->get('user'))->get('data');
   }
 
@@ -287,7 +300,7 @@ class Cmapi
    */
   public function clearTokens(): void
   {
-    (new Store)->forget(self::STORE . md5($this->config()->toJson()));
+    (new Store)->forget($this->getCacheKey());
   }
 
   /**
