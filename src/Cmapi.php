@@ -85,7 +85,7 @@ class Cmapi
       $this->config->get('token'),
       $this->config->get('credentials')->toArray()
     );
-    abort_if($response->failed(), $response->getStatusCode());
+    if ($response->failed()) jotError(['cmapi@authenticate' => $response->json()]);
     return recursive($response->json());
   }
 
