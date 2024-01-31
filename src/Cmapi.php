@@ -53,7 +53,6 @@ class Cmapi
     $store  = new Store;
     $this->config = $this->config($extra);
     $cache = $this->getCacheKey($cacheKey);
-    jotWarning($cache);
     if (!$store->has($cache)) {
       $oauth = $this->authenticate();
       $this->bearer = $oauth->get('access_token');
