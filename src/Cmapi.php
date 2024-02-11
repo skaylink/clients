@@ -86,7 +86,7 @@ class Cmapi
       $this->config->get('credentials')->toArray()
     );
     if ($response->failed()) jotError(['cmapi@authenticate' => $response->json()]);
-    return recursive($response->json());
+    return recursive((array) $response->json());
   }
 
   /**

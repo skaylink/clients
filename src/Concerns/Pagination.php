@@ -39,11 +39,11 @@ trait Pagination
   public function paginate(string $uri, Request $request, array $filter = []): Collection
   {
     try {
-      $data     = [];
+      $data     = collect();
       $params   = $this->getFilterParams($request, $filter);
       $response = $this->iterate($uri, $params, function($result) use ($data) {
         foreach($result as $collection) {
-          $data[] = $collection;
+          $data->push($collection);
         }
       });
       return collect([
