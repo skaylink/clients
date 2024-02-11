@@ -96,7 +96,8 @@ class Cmapi
    */
   private function endpoint(string $uri): string
   {
-    return sprintf('%s/%s', $this->config->get('endpoint'), $uri);
+    return (str_contains($uri, $this->config->get('token'))) ? $uri :
+      sprintf('%s/%s', $this->config->get('endpoint'), $uri);
   }
 
   /**
@@ -156,6 +157,7 @@ class Cmapi
       ->withHeaders($headers)->{$method}($endpoint, $params);
     switch(true) {
       case $response->successful():
+        jot(['cmapi@call' => $endpoint]);
         $data = recursive($response->json());
         if (!$data->has('code')) $data->put('code', $response->getStatusCode());
         return $data;
@@ -280,7 +282,6 @@ class Cmapi
   {
     try {
       $response = $this->get('user/validate-token');
-
     } catch(Exception $e) {
       $response = collect([
         'valid'   => false,
