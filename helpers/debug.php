@@ -1,4 +1,16 @@
 <?php
+
+use Illuminate\Contracts\Database\Eloquent\Builder;
+
+/* dump sql query from given builder object */
+if (!function_exists('sql')) {
+  function sql($query): string {
+    return ($query instanceof Builder) ? vsprintf(
+      str_replace(array('?'), array('\'%s\''),
+      $query->toSql()), $query->getBindings()
+    ) : null;
+  }
+}
 /* dump given arguments */
 if (!function_exists('d')) {
   function d() {

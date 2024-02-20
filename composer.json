@@ -27,7 +27,8 @@
     },
     "files": [
       "helpers/collection.php",
-      "helpers/debug.php"
+      "helpers/debug.php",
+      "helpers/crypto.php"
     ]
   },
   "autoload-dev": {
