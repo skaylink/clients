@@ -66,7 +66,7 @@ trait Pagination
    * @return \Illuminate\Http\Client\Response   $response
    * @access private
    */
-  private function iterate(string $uri, array $params = [], Closure $callback): Response
+  private function iterate(string $uri, array $params, Closure $callback): Response
   {
     $url      = $this->endpoint($uri);
     $response = Http::accept('application/json')
