@@ -22,3 +22,18 @@ if (!function_exists('recursive')) {
     return collect($array)->recursive();
   }
 }
+
+//
+// collectJson
+//
+if (!function_exists('collectJson')) {
+  /**
+   * @param  string                           $json
+   * @return \Illuminate\Support\Collection
+   */
+  function collectJson($json): Collection
+  {
+    if (!$json) return collect();
+    return collect(json_decode($json, true))->recursive();
+  }
+}
