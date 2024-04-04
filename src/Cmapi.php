@@ -158,7 +158,7 @@ class Cmapi
     switch(true) {
       case $response->successful():
         jot(['cmapi@call' => $endpoint]);
-        $data = recursive($response->json());
+        $data = recursive((array) $response->json());
         if (!$data->has('code')) $data->put('code', $response->getStatusCode());
         return $data;
       case $response->failed():
