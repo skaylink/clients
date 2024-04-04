@@ -155,22 +155,24 @@ class Cmapi
     $response = Http::accept('application/json')
       ->withToken($this->bearer)
       ->withHeaders($headers)->{$method}($endpoint, $params);
+    $code = $response->getStatusCode();
     switch(true) {
+      case (Response::HTTP_UNPROCESSABLE_ENTITY == $code):
       case $response->successful():
         jot(['cmapi@call' => $endpoint]);
         $data = recursive((array) $response->json());
-        if (!$data->has('code')) $data->put('code', $response->getStatusCode());
+        if (!$data->has('code')) $data->put('code', $code);
         return $data;
       case $response->failed():
         jotError([
-          'cmapi@call' => $response->getStatusCode(),
+          'cmapi@call' => $code,
           'action'     => $endpoint,
           'params'     => $params,
           'bearer'     => $this->bearer,
           'headers'    => $headers,
           'body'       => $response->json()
         ]);
-        abort($response->getStatusCode());
+        abort($code);
     }
   }
 
@@ -292,7 +294,6 @@ class Cmapi
     }
     return $response;
   }
-
 
   /**
    * @return void

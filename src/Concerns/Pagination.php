@@ -40,7 +40,7 @@ trait Pagination
   {
     try {
       $data     = collect();
-      $params   = $this->getFilterParams($request, $filter);
+      $params   = collect($this->getFilterParams($request, $filter));
       $response = $this->iterate($uri, $params, function($result) use ($data) {
         foreach($result as $collection) {
           $data->push($collection);
@@ -58,40 +58,36 @@ trait Pagination
     }
   }
   /**
-   * paginate next via query string parameter "page"
+   * Paginate next via query string parameter "page"
    *
    * @param  string                             $uri
-   * @param  array                              $params
-   * @param  \Closure                           $callback(data, code, message)
+   * @param  \Illuminate\Support\Collection     $params
+   * @param  \Closure                           $callback(\Illuminate\Support\Collection $data)
    * @return \Illuminate\Http\Client\Response   $response
    * @access private
    */
-  private function iterate(string $uri, array $params, Closure $callback): Response
+  private function iterate(string $uri, Collection $params, Closure $callback): Response
   {
     $url      = $this->endpoint($uri);
-    $response = Http::accept('application/json')
+    $response = Http::acceptJson()
       ->withToken($this->bearer)
-      ->withHeaders($this->headers('get', $url, $params))
+      ->withHeaders($this->headers('get', $url, $params->toArray()))
       ->get($url, $params);
-      jot(['cmapi@pagination:iterate:' => [
-        'uri' => $uri,
-        'params' => $params
-      ]]);
+    $body = recursive($response->json());
+    $meta = optional($body->get('@meta'))->get('pagination');
+    jot(['cmapi@pagination:iterate' => $meta]);
     switch(true) {
       case $response->successful():
-        $body = recursive($response->json());
         $callback($body->get('data'));
-        if ($meta = optional($body->get('@meta'))->get('pagination')) {
-          $page = (int) $meta->get('currentPage');
-          while ($page < (int) $meta->get('totalPages')) {
-            $page++;
-            $this->iterate($uri,
-              array_merge($params, ['page' => $page]), $callback);
-          }
+        if ($meta->get('currentPage') != $meta->get('totalPages')) {
+          $this->iterate($uri, 
+            $params->put('page', $meta->get('currentPage') + 1), 
+            $callback
+          );
         }
         break;
       case $response->failed():
-        jotError(['cmapi@pagination:iterate' => $response->json()]);
+        jotError(['cmapi@pagination:iterate' => $body]);
         return $response;
     }
     return $response;
