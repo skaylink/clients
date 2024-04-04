@@ -89,6 +89,7 @@ trait Pagination
               array_merge($params, ['page' => $page]), $callback);
           }
         }
+        break;
       case $response->failed():
         jotError(['cmapi@pagination:iterate' => $response->json()]);
         return $response;
