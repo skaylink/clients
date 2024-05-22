@@ -46,13 +46,15 @@ class Cmapi
   /**
    * @param  array   $extra
    * @param  string  $cacheKey
+   * @param  bool    $force
    * @constructor
    */
-  public function __construct(array $extra = [], string $cacheKey = '')
+  public function __construct(array $extra = [], string $cacheKey = '', bool $force = false)
   {
     $store  = new Store;
     $this->config = $this->config($extra);
     $cache = $this->getCacheKey($cacheKey);
+    if (true == $force) $this->clearTokens();
     if (!$store->has($cache)) {
       $oauth = $this->authenticate();
       $this->bearer = $oauth->get('access_token');
@@ -270,7 +272,7 @@ class Cmapi
         'username'    => $username,
         'password'    => $password
       ])
-    ], $id);
+    ], $id, true);
     return optional($client->get('user'))->get('data');
   }
 

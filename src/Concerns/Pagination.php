@@ -75,13 +75,13 @@ trait Pagination
       ->get($url, $params);
     $body = recursive($response->json());
     $meta = optional($body->get('@meta'))->get('pagination');
-    jot(['cmapi@pagination:iterate' => $meta]);
+    jot(['cmapi@call' => $url, 'meta' => $meta]);
     switch(true) {
       case $response->successful():
         $callback($body->get('data'));
         if ($meta->get('currentPage') != $meta->get('totalPages')) {
-          $this->iterate($uri, 
-            $params->put('page', $meta->get('currentPage') + 1), 
+          $this->iterate($uri,
+            $params->put('page', $meta->get('currentPage') + 1),
             $callback
           );
         }
